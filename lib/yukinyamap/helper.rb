@@ -24,7 +24,7 @@ module Yukinyamap
 
       path = File.join(root, 'log', 'yukinyamap.log')
       @logger = Logger.new(path)
-      @logger.formatter = Logger::Formatter
+      @logger.formatter = Logger::Formatter.new
 
       @logger
     end
