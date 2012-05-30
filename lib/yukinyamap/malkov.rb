@@ -163,7 +163,9 @@ module Yukinyamap
         text.gsub(RT_PATTERN, '').
           gsub(USER_PATTERN, '').
           gsub(HASHTAG_PATTERN, '').
-          gsub(URL_PATTERN, '')
+          gsub(URL_PATTERN, '').
+          gsub('&lt;', '<').
+          gsub('&gt;', '>')
       end
     end
   end
