@@ -4,7 +4,7 @@ module Yukinyamap
   class Malkov
     MARKER_BEGIN = '__BEGIN__'
     MARKER_END   = '__END__'
-    ALPHA        = /[\w\d]+/
+    ALPHA        = /^[\w\d]+$/
     BRANCKETS    = /[「」『』（）\(\)]/
 
     attr_reader :table
@@ -35,10 +35,11 @@ module Yukinyamap
 
     private
     def clean(text)
-      text.gsub('  ', ' ').
+      text.
         gsub(MARKER_BEGIN, '').
         gsub(MARKER_END, '').
         gsub(BRANCKETS, '').
+        gsub(/ +/, ' ').
         strip
     end
 
@@ -90,6 +91,12 @@ module Yukinyamap
         if node.is_a?(String)
           node = Cleaner.clean(node)
           node = YM.tagger.parse(node).split(' ')
+        end
+        node = node.map do |n|
+          if n.match(ALPHA)
+            n = ' ' + n + ' '
+          end
+          n
         end
         unless node.first == MARKER_BEGIN
           node.unshift MARKER_BEGIN
