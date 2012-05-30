@@ -5,5 +5,6 @@ module Yukinyamap
 
   require 'yukinyamap/helper'
   require 'yukinyamap/hooks'
+  require 'yukinyamap/malkov'
   require 'yukinyamap/stream'
 end

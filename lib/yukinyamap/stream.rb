@@ -11,6 +11,9 @@ module Yukinyamap
       @hooks  = []
       @hooks  << MongoHook.new
       @hooks  << LogHook.new
+      @hooks  << StoreHook.new
+      @hooks  << TweetHook.new
+      @hooks  << ReplyHook.new
     end
 
     def start

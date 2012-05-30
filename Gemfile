@@ -1,5 +1,8 @@
 source 'https://rubygems.org'
 
+gem 'active_support', :require => 'active_support/core_ext'
+gem 'i18n'
+gem 'twitter'
 gem 'userstream'
 gem 'mongo'
 gem 'bson_ext'

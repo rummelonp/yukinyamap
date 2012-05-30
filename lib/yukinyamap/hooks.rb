@@ -15,4 +15,45 @@ module Yukinyamap
       YM.say status
     end
   end
+
+  class StoreHook
+    def call(status)
+      YM.malkov.rotate(status.text)
+    end
+  end
+
+  class TweetHook
+    def initialize
+      @tweet_count = 0
+      @update_time = Time.now
+
+      @count = YM.config[:tweet][:count]
+      @min   = YM.config[:tweet][:min]
+      @max   = YM.config[:tweet][:max]
+    end
+
+    def call(status)
+      return if status.in_reply_to_screen_name == YM.screen_name
+      return if status.user!.screen_name == YM.screen_name
+
+      @tweet_count += 1
+      diff = Time.now.to_i - @update_time.to_i
+      if diff > @max.minutes ||
+          (@tweet_count > @count && diff > @min.minutes)
+        @tweet_count = 0
+        @update_time = Time.now
+        YM.twitter.update(YM.malkov.generate)
+      end
+    end
+  end
+
+  class ReplyHook
+    def call(status)
+      return if status.in_reply_to_screen_name != YM.screen_name
+
+      options = {:in_reply_to_status_id => status.id}
+      tweet = "@#{status.user.screen_name} #{YM.malkov.generate}"
+      YM.twitter.update(tweet, options)
+    end
+  end
 end

@@ -4,3 +4,7 @@
   :consumer_secret: your_consumer_secret
   :oauth_token: your_oauth_token
   :oauth_token_secret: your_oauth_token_secret
+:tweet:
+  :count: 5
+  :min: 5
+  :max: 20

@@ -4,6 +4,10 @@ require 'logger'
 
 module Yukinyamap
   module Helper
+    def screen_name
+      'yukinyamap'
+    end
+
     def root
       @root ||= File.join(File.dirname(File.expand_path(__FILE__)), '..', '..')
     end
@@ -20,6 +24,9 @@ module Yukinyamap
 
       path = File.join(root, 'log', 'yukinyamap.log')
       @logger = Logger.new(path)
+      @logger.formatter = Logger::Formatter
+
+      @logger
     end
 
     def tee(msg, level = :info)
@@ -43,8 +50,12 @@ module Yukinyamap
       end
     end
 
+    def twitter
+      @twitter ||= Twitter.new(config[:twitter])
+    end
+
     def user_stream
-      @twitter ||= UserStream.client(config[:twitter])
+      @user_stream ||= UserStream.client(config[:twitter])
     end
 
     def db
@@ -61,6 +72,10 @@ module Yukinyamap
 
     def tagger
       @tagger ||= Natto::MeCab.new('-O wakati')
+    end
+
+    def malkov
+      @malkov ||= Malkov.new
     end
   end
 
