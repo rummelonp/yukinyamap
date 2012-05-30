@@ -56,4 +56,15 @@ module Yukinyamap
       YM.twitter.update(tweet, options)
     end
   end
+
+  class FollowHook
+    def call(status)
+      return unless status.event == 'follow'
+      return if status.source.screen_name == YM.screen_name
+
+      YM.twitter.follow(status.source.screen_name)
+      tweet = "@#{status.source.screen_name} #{YM.malkov.generate}"
+      YM.twitter.update(tweet)
+    end
+  end
 end

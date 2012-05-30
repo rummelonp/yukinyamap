@@ -14,6 +14,7 @@ module Yukinyamap
       @hooks  << StoreHook.new
       @hooks  << TweetHook.new
       @hooks  << ReplyHook.new
+      @hooks  << FollowHook.new
     end
 
     def start
