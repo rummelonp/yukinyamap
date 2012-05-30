@@ -4,8 +4,11 @@ module Yukinyamap
   class Malkov
     MARKER_BEGIN = '__BEGIN__'
     MARKER_END   = '__END__'
-    ALPHA        = /^[\w\d]+$/
+    ALPHA        = /^[\w ]+$/
+    NUMBER       = /^[\d ]+$/
+    HIRAGANA     = /^[ぁ-ゞ]+$/
     BRANCKETS    = /[「」『』（）\(\)]/
+    SIGN         = /^([,.?!、。？！‸…ー〜]|#{BRANCKETS})+$/
 
     attr_reader :table
 
@@ -20,7 +23,11 @@ module Yukinyamap
     end
 
     def generate
-      node = @table.first
+      send [:random_generate, :popular_generate].sample
+    end
+
+    def random_generate(start_node = @table.first)
+      node = start_node
       text = node[1] + node[2]
       loop do
         node = @table.next_node(node)
@@ -31,6 +38,35 @@ module Yukinyamap
       end
 
       clean(text)
+    end
+
+    def popular_generate
+      word = popular_words.map(&:first).first(6).sample
+
+      node = @table.find_node(word)
+      text = node[0] + random_generate(node)
+      loop do
+        node = @table.prev_node(node)
+        break unless node
+        break if node[0] == MARKER_BEGIN
+        break if clean(text + node[0]).size > 140
+        text = node[0] + text
+      end
+
+      clean(text)
+    end
+
+    def popular_words
+      YM.malkov.table.nodes.last(32).flatten.reduce(Hash.new(0)) { |r, n|
+        if n != MARKER_BEGIN &&
+            n != MARKER_END &&
+            !n.match(NUMBER) &&
+            !n.match(HIRAGANA) &&
+            !n.match(SIGN) &&
+          r[n] += 1
+        end
+        r
+      }.sort_by { |r, n| -n }
     end
 
     private
@@ -79,11 +115,20 @@ module Yukinyamap
         @nodes.flatten(1).select { |n| n[0] == MARKER_BEGIN }.sample
       end
 
+      def prev_node(node)
+        @nodes.flatten(1).select { |n|
+          n[1] == node[0] && n[2] == node[1]
+        }.sample
+      end
+
       def next_node(node)
-        nodes = @nodes.flatten(1).select do |n|
+        @nodes.flatten(1).select { |n|
           n[0] == node[1] && n[1] == node[2]
-        end
-        nodes.sample
+        }.sample
+      end
+
+      def find_node(word)
+        @nodes.flatten(1).select { |n| n.include?(word) }.sample
       end
 
       private
@@ -93,7 +138,7 @@ module Yukinyamap
           node = YM.tagger.parse(node).split(' ')
         end
         node = node.map do |n|
-          if n.match(ALPHA)
+          if n.match(ALPHA) || n.match(NUMBER)
             n = ' ' + n + ' '
           end
           n
