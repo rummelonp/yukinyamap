@@ -10,4 +10,9 @@ require 'bundler'
 Bundler.require
 require 'yukinyamap'
 
-Yukinyamap::Stream.new.start
+command = ARGV.shift
+if command =~ /(?:console|cli)/
+  Pry.start
+else
+  Yukinyamap::Stream.new.start
+end
