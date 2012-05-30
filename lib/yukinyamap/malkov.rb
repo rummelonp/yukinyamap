@@ -7,7 +7,7 @@ module Yukinyamap
     ALPHA        = /^[\w ]+$/
     NUMBER       = /^[\d ]+$/
     HIRAGANA     = /^[ぁ-ゞ]+$/
-    BRANCKETS    = /[「」『』（）\(\)]/
+    BRANCKETS    = /[「」『』]/
     SIGN         = /^([,.?!、。？！‸…ー〜]|#{BRANCKETS})+$/
 
     attr_reader :table
