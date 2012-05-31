@@ -12,58 +12,72 @@ module Yukinyamap
 
     attr_reader :table
 
-    def initialize(nodes = nil)
-      @table = nodes ? Table.new(nodes) : Table.from_db
+    def initialize(texts = nil)
+      @table = texts ? Table.new(texts) : Table.from_db
     end
 
-    def rotate(node)
-      @table.rotate(node)
+    def rotate(text)
+      @table.rotate(text)
 
       self
     end
 
     def generate
-      send [:random_generate, :popular_generate].sample
+      send [:generate_random, :generate_popular].sample
     end
 
-    def random_generate(start_node = @table.first)
-      node = start_node
-      text = node[1] + node[2]
+    def generate_random
+      generate_from_first_node(@table.first_node)
+    end
+
+    def generate_popular
+      generate_from_word(popular_word)
+    end
+
+    def generate_from_word(word)
+      node = @table.find_node(word)
+      generate_from_last_node(node) + generate_from_first_node(node)
+    end
+
+    def generate_from_first_node(node)
+      text = node.join
       loop do
         node = @table.next_node(node)
         break unless node
-        break if node[2] == MARKER_END
         break if clean(text + node[2]).size > 140
         text += node[2]
+        break if node[2] == MARKER_END
       end
 
       clean(text)
     end
 
-    def popular_generate
-      word = popular_words.map(&:first).first(6).sample
-
-      node = @table.find_node(word)
-      text = node[0] + random_generate(node)
+    def generate_from_last_node(node)
+      text = ''
       loop do
         node = @table.prev_node(node)
         break unless node
         break if node[0] == MARKER_BEGIN
-        break if clean(text + node[0]).size > 140
+        break if clean(node[0] + text).size > 140
         text = node[0] + text
       end
 
       clean(text)
     end
 
-    def popular_words
-      YM.malkov.table.nodes.last(32).flatten.reduce(Hash.new(0)) { |r, n|
+    def popular_word(nodes = nil)
+      popular_words(nodes).first(6).map(&:first).sample
+    end
+
+    def popular_words(nodes = nil)
+      nodes = nodes ? nodes : YM.malkov.table.nodes.last(32).flatten
+      nodes.reduce(Hash.new(0)) { |r, n|
         if n != MARKER_BEGIN &&
             n != MARKER_END &&
             !n.match(NUMBER) &&
             !n.match(HIRAGANA) &&
             !n.match(SIGN) &&
-          r[n] += 1
+            r[n] += 1
         end
         r
       }.sort_by { |r, n| -n }
@@ -98,37 +112,53 @@ module Yukinyamap
           to_a.map {|s| s['text']}
       end
 
-      def initialize(nodes = [])
-        @nodes = nodes.map {|n| normalize(n)}
+      def initialize(texts = [])
+        @nodes = texts.map {|n| normalize(n)}
       end
 
-      def rotate(node)
-        return self unless node
+      def flat_nodes
+        nodes.flatten(1)
+      end
 
-        @nodes.pop
-        @nodes.unshift normalize(node)
+      def rotate(text)
+        return self unless text
+
+        nodes.pop
+        nodes.unshift normalize(text)
 
         self
       end
 
-      def first
-        @nodes.flatten(1).select { |n| n[0] == MARKER_BEGIN }.sample
+      def first_nodes
+        flat_nodes.select { |n| n[0] == MARKER_BEGIN }
+      end
+
+      def prev_nodes(node)
+        flat_nodes.select { |n| n[1] == node[0] && n[2] == node[1] }
+      end
+
+      def next_nodes(node)
+        flat_nodes.select { |n| n[0] == node[1] && n[1] == node[2] }
+      end
+
+      def find_nodes(word)
+        flat_nodes.select { |n| n.include?(word) }
+      end
+
+      def first_node
+        first_nodes.sample
       end
 
       def prev_node(node)
-        @nodes.flatten(1).select { |n|
-          n[1] == node[0] && n[2] == node[1]
-        }.sample
+        prev_nodes(node).sample
       end
 
       def next_node(node)
-        @nodes.flatten(1).select { |n|
-          n[0] == node[1] && n[1] == node[2]
-        }.sample
+        next_nodes(node).sample
       end
 
       def find_node(word)
-        @nodes.flatten(1).select { |n| n.include?(word) }.sample
+        find_nodes(word).sample
       end
 
       private
