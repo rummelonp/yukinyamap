@@ -11,3 +11,7 @@
   :max:
     :count: 15
     :minutes: 30
+:malkov:
+  :popular:
+    :recent: 32
+    :ranking: 6

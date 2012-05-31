@@ -66,11 +66,13 @@ module Yukinyamap
     end
 
     def popular_word(nodes = nil)
-      popular_words(nodes).first(6).map(&:first).sample
+      ranking = YM.config[:malkov][:popular][:ranking]
+      popular_words(nodes).first(ranking).map(&:first).sample
     end
 
     def popular_words(nodes = nil)
-      nodes = nodes ? nodes : YM.malkov.table.nodes.last(32).flatten
+      recent = YM.config[:malkov][:popular][:recent]
+      nodes = nodes ? nodes : YM.malkov.table.nodes.last(recent).flatten
       nodes.reduce(Hash.new(0)) { |r, n|
         if n != MARKER_BEGIN &&
             n != MARKER_END &&
