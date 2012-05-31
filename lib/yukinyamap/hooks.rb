@@ -27,9 +27,10 @@ module Yukinyamap
       @tweet_count = 0
       @update_time = Time.now
 
-      @count = YM.config[:tweet][:count]
-      @min   = YM.config[:tweet][:min]
-      @max   = YM.config[:tweet][:max]
+      @min_count   = YM.config[:tweet][:min][:count]
+      @min_minutes = YM.config[:tweet][:min][:minutes].minutes
+      @max_count   = YM.config[:tweet][:max][:count]
+      @max_minutes = YM.config[:tweet][:max][:minutes].minutes
     end
 
     def call(status)
@@ -38,8 +39,9 @@ module Yukinyamap
 
       @tweet_count += 1
       diff = Time.now.to_i - @update_time.to_i
-      if diff > @max.minutes ||
-          (@tweet_count > @count && diff > @min.minutes)
+      if diff > @max_minutes ||
+          @tweet_count > @max_count ||
+          (@tweet_count > @min_count && diff > @min_minutes)
         @tweet_count = 0
         @update_time = Time.now
         YM.twitter.update(YM.malkov.generate)
