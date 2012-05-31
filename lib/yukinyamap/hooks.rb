@@ -2,6 +2,10 @@
 
 module Yukinyamap
   class MongoHook
+    def match(status)
+      true
+    end
+
     def call(status)
       if status.text
         status.keywords = YM.tagger.parse(status.text).split(' ')
@@ -11,18 +15,23 @@ module Yukinyamap
   end
 
   class LogHook
+    def match(status)
+      true
+    end
+
     def call(status)
       YM.say status
     end
   end
 
   class StoreHook
-    def call(status)
-      return self unless status
-      return self unless status.text
-      return self unless status.protected?
-      return self unless status.user.screen_name == YM.screen_name
+    def match(status)
+      status.user!.screen_name != YM.screen_name &&
+        status.text &&
+        !status.protected?
+    end
 
+    def call(status)
       YM.malkov.rotate(status.text)
     end
   end
@@ -38,10 +47,12 @@ module Yukinyamap
       @max_minutes = YM.config[:tweet][:max][:minutes].minutes
     end
 
-    def call(status)
-      return if status.in_reply_to_screen_name == YM.screen_name
-      return if status.user!.screen_name == YM.screen_name
+    def match(status)
+      status.user!.screen_name != YM.screen_name &&
+        status.in_reply_to_screen_name != YM.screen_name
+    end
 
+    def call(status)
       @tweet_count += 1
       diff = Time.now.to_i - @update_time.to_i
       if diff > @max_minutes ||
@@ -55,9 +66,12 @@ module Yukinyamap
   end
 
   class ReplyHook
-    def call(status)
-      return if status.in_reply_to_screen_name != YM.screen_name
+    def match(status)
+      status.user!.screen_name != YM.screen_name &&
+        status.in_reply_to_screen_name == YM.screen_name
+    end
 
+    def call(status)
       options = {:in_reply_to_status_id => status.id}
       tweet = "@#{status.user.screen_name} #{YM.malkov.generate}"
       YM.twitter.update(tweet, options)
@@ -65,10 +79,12 @@ module Yukinyamap
   end
 
   class FollowHook
-    def call(status)
-      return unless status.event == 'follow'
-      return if status.source.screen_name == YM.screen_name
+    def match(status)
+      status.event == 'follow' &&
+        status.source.screen_name != YM.screen_name
+    end
 
+    def call(status)
       YM.twitter.follow(status.source.screen_name)
       tweet = "@#{status.source.screen_name} #{YM.malkov.generate}"
       YM.twitter.update(tweet)

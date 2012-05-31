@@ -18,7 +18,7 @@ module Yukinyamap
         begin
           @client.user do |status|
             @hooks.each do |h|
-              h.call(status) rescue YM.tee $!, :warn
+              h.match(status) && h.call(status) rescue YM.tee $!, :warn
             end
           end
         rescue UserStream::Unauhtorized
