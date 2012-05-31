@@ -18,6 +18,11 @@ module Yukinyamap
 
   class StoreHook
     def call(status)
+      return self unless status
+      return self unless status.text
+      return self unless status.protected?
+      return self unless status.user.screen_name == YM.screen_name
+
       YM.malkov.rotate(status.text)
     end
   end
