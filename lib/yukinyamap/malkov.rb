@@ -12,8 +12,8 @@ module Yukinyamap
 
     attr_reader :table
 
-    def initialize
-      @table = Table.from_db
+    def initialize(nodes = nil)
+      @table = nodes ? Table.new(nodes) : Table.from_db
     end
 
     def rotate(node)
