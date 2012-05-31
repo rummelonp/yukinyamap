@@ -1,3 +1,4 @@
 Gemfile.lock
+hooks/*.rb
 config/*.yml
 log/*

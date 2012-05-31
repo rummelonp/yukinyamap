@@ -68,3 +68,5 @@ module Yukinyamap
     end
   end
 end
+
+Dir[YM.root + '/hooks/**.rb'].each { |f| require f }

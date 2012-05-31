@@ -8,13 +8,9 @@ module Yukinyamap
 
     def setup
       @client = YM.user_stream
-      @hooks  = []
-      @hooks  << MongoHook.new
-      @hooks  << LogHook.new
-      @hooks  << StoreHook.new
-      @hooks  << TweetHook.new
-      @hooks  << ReplyHook.new
-      @hooks  << FollowHook.new
+      @hooks  = YM.constants.
+        grep(/Hook$/).
+        map { |c| YM.const_get(c).new }
     end
 
     def start
