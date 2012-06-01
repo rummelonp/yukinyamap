@@ -53,30 +53,43 @@ module Yukinyamap
     end
 
     def match(status)
-      status.user!.screen_name != YM.screen_name &&
-        status.in_reply_to_screen_name != YM.screen_name
+      status.user!.screen_name != YM.screen_name
     end
 
     def call(status)
-      @tweet_count += 1
-      diff = Time.now.to_i - @update_time.to_i
-      if diff > @max_minutes ||
-          @tweet_count > @max_count ||
-          (@tweet_count > @min_count && diff > @min_minutes)
-        @tweet_count = 0
-        @update_time = Time.now
-        YM.twitter.update(YM.malkov.generate)
+      update_state
+      if status.in_reply_to_screen_name == YM.screen_name
+        reset_state
+        do_reply(status)
+      elsif state?
+        reset_state
+        do_tweet(status)
       end
     end
-  end
 
-  class ReplyHook
-    def match(status)
-      status.user!.screen_name != YM.screen_name &&
-        status.in_reply_to_screen_name == YM.screen_name
+    def state?
+      diff = Time.now.to_i - @update_time.to_i
+
+      return true if diff > @max_minutes
+      return true if @tweet_count > @max_count
+      return true if @tweet_count > @min_count && diff > @min_minutes
+      false
     end
 
-    def call(status)
+    def update_state
+      @tweet_count += 1
+    end
+
+    def reset_state
+      @tweet_count = 0
+      @update_time = Time.now
+    end
+
+    def do_tweet(status)
+      YM.twitter.update(YM.malkov.generate)
+    end
+
+    def do_reply(status)
       popular_words = YM.malkov.popular_words.map(&:first)
       word = popular_words.find { |w|
         status.keywords.include?(w)
