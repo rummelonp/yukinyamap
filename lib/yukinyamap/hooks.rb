@@ -50,6 +50,9 @@ module Yukinyamap
       @users           = {}
       @runaway_count   = YM.config[:runaway][:count]
       @runaway_minutes = YM.config[:runaway][:minutes].minutes
+      @tweets          = {}
+      @rip_minutes     = YM.config[:rip][:minutes].minutes
+      @rip_count       = YM.config[:rip][:count]
       @tweet_count     = 0
       @update_time     = Time.now
       @min_count       = YM.config[:tweet][:min][:count]
@@ -66,7 +69,10 @@ module Yukinyamap
     def call(status)
       update_state(status)
       return if runaway?(status)
-      if message = message_from_keyword(status)
+      if rip?(status)
+        do_tweet(status.text)
+        reset_state
+      elsif message = message_from_keyword(status)
         do_reply(status, message)
         reset_state
       elsif status.in_reply_to_screen_name == YM.screen_name
@@ -81,6 +87,8 @@ module Yukinyamap
     def update_state(status)
       return unless status.text
       @tweet_count += 1
+      @tweets[Time.now] = status.text
+      @tweets.each { |t, _| @tweets.delete(t) if t <= @rip_minutes.ago }
       return unless status.user
       @users[Time.now] = status.user.screen_name
       @users.each { |t, _| @users.delete(t) if t <= @runaway_minutes.ago }
@@ -94,6 +102,10 @@ module Yukinyamap
     def runaway?(status)
       return true unless status.user
       @users.select { |_, s| s == status.user.screen_name }.size >= @runaway_count
+    end
+
+    def rip?(status)
+      @tweets.select { |_, t| t == status.text }.size >= @rip_count
     end
 
     def updated?
@@ -112,8 +124,8 @@ module Yukinyamap
       keyword[:messages].sample if keyword
     end
 
-    def do_tweet
-      YM.twitter.update(YM.malkov.generate)
+    def do_tweet(tweet = YM.malkov.generate)
+      YM.twitter.update(tweet)
     end
 
     def do_reply(status, message)
