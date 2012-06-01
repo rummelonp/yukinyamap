@@ -83,7 +83,7 @@ module Yukinyamap
       db.collection(col_key)
     end
 
-    def col_key_from_status(status)
+    def key_from_status(status)
       %w{friends event delete}.find {|key| status.key?(key)} || 'status'
     end
 

@@ -16,7 +16,9 @@ module Yukinyamap
     attr_reader :table
 
     def initialize(texts = nil)
-      @table = texts ? Table.new(texts) : Table.from_db
+      @table   = texts ? Table.new(texts) : Table.from_db
+      @recent  = YM.config[:malkov][:popular][:recent]
+      @ranking = YM.config[:malkov][:popular][:ranking]
     end
 
     def rotate(text)
@@ -73,14 +75,12 @@ module Yukinyamap
     end
 
     def popular_word(words = nil)
-      ranking = YM.config[:malkov][:popular][:ranking]
-      popular_words(words).first(ranking).map(&:first).sample
+      popular_words(words).take(@ranking).map(&:first).sample
     end
 
     def popular_words(words = nil)
       tagger = Natto::MeCab.new
-      recent = YM.config[:malkov][:popular][:recent]
-      words = words ? words : YM.malkov.table.nodes.first(recent).flatten
+      words = words ? words : YM.malkov.table.nodes.take(@recent).flatten
       words.select { |w|
         w != MARKER_BEGIN &&
         w != MARKER_END &&
@@ -173,24 +173,13 @@ module Yukinyamap
       end
 
       private
-      def normalize(node)
-        if node.is_a?(String)
-          node = Cleaner.clean(node)
-          node = YM.tagger.parse(node).split(' ')
-        end
+      def normalize(text)
+        text = Cleaner.clean(text)
+        node = YM.tagger.parse(text).split(' ')
         node = node.map do |n|
-          if n.match(ALPHA) || n.match(NUMBER)
-            n = ' ' + n + ' '
-          end
-          n
+          (n.match(ALPHA) || n.match(NUMBER)) ? " #{n} " : n
         end
-        unless node.first == MARKER_BEGIN
-          node.unshift MARKER_BEGIN
-        end
-        unless node.last == MARKER_END
-          node.push MARKER_END
-        end
-        node.each_cons(3).to_a
+        [MARKER_BEGIN, *node, MARKER_END].each_cons(3).to_a
       end
     end
 
@@ -214,8 +203,8 @@ module Yukinyamap
       ].freeze
 
       def self.clean(text)
-        PATTERNS.each do |p|
-          text = text.gsub(p, '')
+        PATTERNS.each do |r|
+          text = text.gsub(r, '')
         end
 
         CHARACTER_REFERENCES.each do |r|

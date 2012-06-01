@@ -10,7 +10,7 @@ module Yukinyamap
       if status.text
         status.keywords = YM.tagger.parse(status.text).split(' ')
       end
-      YM.collection(YM.col_key_from_status(status)).insert(status)
+      YM.collection(YM.key_from_status(status)).insert(status)
     end
   end
 
@@ -20,12 +20,16 @@ module Yukinyamap
     end
 
     def call(status)
-      key = YM.col_key_from_status(status)
+      YM.tee format(status), :debug
+    end
+
+    def format(status)
+      key = YM.key_from_status(status)
       message = key
       if key == 'status'
         message += ": @#{status.user!.screen_name}"
       end
-      YM.tee message, :debug
+      message
     end
   end
 
@@ -44,8 +48,8 @@ module Yukinyamap
   class TweetHook
     def initialize
       @tweet_count = 0
-      @users       = {}
       @update_time = Time.now
+      @users       = {}
       @min_count   = YM.config[:tweet][:min][:count]
       @min_minutes = YM.config[:tweet][:min][:minutes].minutes
       @max_count   = YM.config[:tweet][:max][:count]
@@ -61,28 +65,15 @@ module Yukinyamap
       update_state(status)
       return if runaway?(status)
       if message = message_from_keyword(status.text)
-        reset_state
         do_reply(status, message)
+        reset_state
       elsif status.in_reply_to_screen_name == YM.screen_name
-        reset_state
         do_popular_reply(status)
-      elsif state?
         reset_state
+      elsif updated?
         do_tweet
+        reset_state
       end
-    end
-
-    def state?
-      diff = Time.now.to_i - @update_time.to_i
-      return true if diff > @max_minutes
-      return true if @tweet_count > @max_count
-      return true if @tweet_count > @min_count && diff > @min_minutes
-      false
-    end
-
-    def runaway?(status)
-      return true unless status.user
-      @users.select { |t, s| s == status.user.screen_name }.size > 5
     end
 
     def update_state(status)
@@ -96,6 +87,19 @@ module Yukinyamap
     def reset_state
       @tweet_count = 0
       @update_time = Time.now
+    end
+
+    def runaway?(status)
+      return true unless status.user
+      @users.select { |t, s| s == status.user.screen_name }.size > 5
+    end
+
+    def updated?
+      diff = Time.now.to_i - @update_time.to_i
+      return true if diff > @max_minutes
+      return true if @tweet_count > @max_count
+      return true if @tweet_count > @min_count && diff > @min_minutes
+      false
     end
 
     def message_from_keyword(text)
@@ -131,8 +135,7 @@ module Yukinyamap
 
     def call(status)
       YM.twitter.follow(status.source.screen_name)
-      tweet = "@#{status.source.screen_name} #{YM.malkov.generate_popular}"
-      YM.twitter.update(tweet)
+      YM.twitter.update("@#{status.source.screen_name} #{YM.malkov.generate_popular}")
     end
   end
 end
