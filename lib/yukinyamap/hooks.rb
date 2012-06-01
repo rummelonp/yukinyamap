@@ -47,11 +47,11 @@ module Yukinyamap
 
   class TweetHook
     def initialize
-      @tweet_count     = 0
-      @update_time     = Time.now
       @users           = {}
       @runaway_count   = YM.config[:runaway][:count]
       @runaway_minutes = YM.config[:runaway][:minutes].minutes
+      @tweet_count     = 0
+      @update_time     = Time.now
       @min_count       = YM.config[:tweet][:min][:count]
       @min_minutes     = YM.config[:tweet][:min][:minutes].minutes
       @max_count       = YM.config[:tweet][:max][:count]
@@ -83,7 +83,7 @@ module Yukinyamap
       @tweet_count += 1
       return unless status.user
       @users[Time.now] = status.user.screen_name
-      @users.each { |t, s| @users.delete(t) if t < @runaway_minutes.ago }
+      @users.each { |t, _| @users.delete(t) if t <= @runaway_minutes.ago }
     end
 
     def reset_state
@@ -93,14 +93,14 @@ module Yukinyamap
 
     def runaway?(status)
       return true unless status.user
-      @users.select { |t, s| s == status.user.screen_name }.size > @runaway_count
+      @users.select { |_, s| s == status.user.screen_name }.size >= @runaway_count
     end
 
     def updated?
       diff = Time.now.to_i - @update_time.to_i
-      return true if diff > @max_minutes
-      return true if @tweet_count > @max_count
-      return true if @tweet_count > @min_count && diff > @min_minutes
+      return true if diff >= @max_minutes
+      return true if @tweet_count >= @max_count
+      return true if @tweet_count >= @min_count && diff >= @min_minutes
       false
     end
 

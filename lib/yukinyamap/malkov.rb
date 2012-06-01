@@ -87,11 +87,11 @@ module Yukinyamap
         !w.match(NUMBER) &&
         !w.match(SIGN) &&
         tagger.parse(w).match('名詞')
-      }.reduce(Hash.new(0)) { |r, n|
-        r[n] += 1
+      }.reduce(Hash.new(0)) { |r, w|
+        r[w] += 1
         r
-      }.select { |w, c| c > 1 }.
-        sort_by { |w, c| -c }
+      }.select { |_, c| c > 1 }.
+        sort_by { |_, c| -c }
     end
 
     private
