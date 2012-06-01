@@ -64,7 +64,7 @@ module Yukinyamap
     def call(status)
       update_state(status)
       return if runaway?(status)
-      if message = message_from_keyword(status.text)
+      if message = message_from_keyword(status)
         do_reply(status, message)
         reset_state
       elsif status.in_reply_to_screen_name == YM.screen_name
@@ -102,9 +102,11 @@ module Yukinyamap
       false
     end
 
-    def message_from_keyword(text)
-      return unless text
-      keyword = @keywords.find { |h| text.match(h[:condition]) }
+    def message_from_keyword(status)
+      return unless status.text
+      return if status.in_reply_to_screen_name &&
+        status.in_reply_to_screen_name != YM.screen_name
+      keyword = @keywords.find { |h| status.text.match(h[:condition]) }
       keyword[:messages].sample if keyword
     end
 
