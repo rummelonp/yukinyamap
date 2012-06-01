@@ -45,11 +45,11 @@ module Yukinyamap
     def initialize
       @tweet_count = 0
       @update_time = Time.now
-
       @min_count   = YM.config[:tweet][:min][:count]
       @min_minutes = YM.config[:tweet][:min][:minutes].minutes
       @max_count   = YM.config[:tweet][:max][:count]
       @max_minutes = YM.config[:tweet][:max][:minutes].minutes
+      @keywords    = YM.config[:keywords]
     end
 
     def match(status)
@@ -58,18 +58,20 @@ module Yukinyamap
 
     def call(status)
       update_state
-      if status.in_reply_to_screen_name == YM.screen_name
+      if message = message_from_keyword(status.text)
         reset_state
-        do_reply(status)
+        do_reply(status, message)
+      elsif status.in_reply_to_screen_name == YM.screen_name
+        reset_state
+        do_popular_reply(status)
       elsif state?
         reset_state
-        do_tweet(status)
+        do_tweet
       end
     end
 
     def state?
       diff = Time.now.to_i - @update_time.to_i
-
       return true if diff > @max_minutes
       return true if @tweet_count > @max_count
       return true if @tweet_count > @min_count && diff > @min_minutes
@@ -85,11 +87,23 @@ module Yukinyamap
       @update_time = Time.now
     end
 
-    def do_tweet(status)
+    def message_from_keyword(text)
+      return unless text
+      keyword = @keywords.find { |h| text.match(h[:condition]) }
+      keyword[:messages].sample if keyword
+    end
+
+    def do_tweet
       YM.twitter.update(YM.malkov.generate)
     end
 
-    def do_reply(status)
+    def do_reply(status, message)
+      tweet = "@#{status.user.screen_name} #{message}"
+      options = {:in_reply_to_status_id => status.id}
+      YM.twitter.update(tweet, options)
+    end
+
+    def do_popular_reply(status)
       popular_words = YM.malkov.popular_words.map(&:first)
       word = popular_words.find { |w|
         status.keywords.include?(w)

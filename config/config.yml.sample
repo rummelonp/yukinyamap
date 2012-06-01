@@ -15,3 +15,12 @@
   :popular:
     :recent: 32
     :ranking: 6
+:keyword:
+  - :condition:
+      !ruby/regexp /(おはよう|オハヨウ|[お御]早う)/
+    :messages:
+      - おはよう
+  - :condition:
+      !ruby/regexp /(おやすみ|オヤスミ|[お御]休み?)/
+    :messages:
+      - おやすみ
