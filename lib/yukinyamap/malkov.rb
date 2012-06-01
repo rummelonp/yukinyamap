@@ -39,7 +39,11 @@ module Yukinyamap
 
     def generate_from_word(word)
       node = table.find_node(word)
-      generate_from_last_node(node) + generate_from_first_node(node)
+      if node
+        generate_from_last_node(node) + generate_from_first_node(node)
+      else
+        nil
+      end
     end
 
     def generate_from_first_node(node)
