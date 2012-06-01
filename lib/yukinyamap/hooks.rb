@@ -44,6 +44,7 @@ module Yukinyamap
   class TweetHook
     def initialize
       @tweet_count = 0
+      @users       = {}
       @update_time = Time.now
       @min_count   = YM.config[:tweet][:min][:count]
       @min_minutes = YM.config[:tweet][:min][:minutes].minutes
@@ -57,7 +58,8 @@ module Yukinyamap
     end
 
     def call(status)
-      update_state
+      update_state(status)
+      return if runaway?(status)
       if message = message_from_keyword(status.text)
         reset_state
         do_reply(status, message)
@@ -78,8 +80,17 @@ module Yukinyamap
       false
     end
 
-    def update_state
+    def runaway?(status)
+      return true unless status.user
+      @users.select { |t, s| s == status.user.screen_name }.size > 5
+    end
+
+    def update_state(status)
+      return unless status.text
       @tweet_count += 1
+      return unless status.user
+      @users[Time.now] = status.user.screen_name
+      @users.each { |t, s| @users.delete(t) if t < 1.minutes.ago }
     end
 
     def reset_state
