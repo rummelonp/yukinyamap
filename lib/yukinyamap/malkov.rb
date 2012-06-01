@@ -82,7 +82,7 @@ module Yukinyamap
             r[n] += 1
         end
         r
-      }.sort_by { |r, n| -n }
+      }.select { |r, n| n > 1 } .sort_by { |r, n| -n }
     end
 
     private
