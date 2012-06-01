@@ -9,12 +9,14 @@
     :count: 5
     :minutes: 5
   :max:
-    :count: 15
-    :minutes: 30
-:malkov:
-  :popular:
-    :recent: 32
-    :ranking: 6
+    :count: 10
+    :minutes: 20
+:runaway:
+  :count: 5
+  :minutes: 1
+:popular:
+  :recent: 32
+  :ranking: 10
 :keyword:
   - :condition:
       !ruby/regexp /(おはよう|オハヨウ|[お御]早う)/

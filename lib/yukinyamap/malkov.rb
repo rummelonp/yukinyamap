@@ -17,8 +17,8 @@ module Yukinyamap
 
     def initialize(texts = nil)
       @table   = texts ? Table.new(texts) : Table.from_db
-      @recent  = YM.config[:malkov][:popular][:recent]
-      @ranking = YM.config[:malkov][:popular][:ranking]
+      @recent  = YM.config[:popular][:recent]
+      @ranking = YM.config[:popular][:ranking]
     end
 
     def rotate(text)
