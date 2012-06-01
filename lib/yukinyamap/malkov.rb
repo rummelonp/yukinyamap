@@ -4,11 +4,14 @@ module Yukinyamap
   class Malkov
     MARKER_BEGIN = '__BEGIN__'
     MARKER_END   = '__END__'
+
     ALPHA        = /^[\w ]+$/
     NUMBER       = /^[\d ]+$/
-    HIRAGANA     = /^[ぁ-ゞ]+$/
-    BRANCKETS    = /[「」『』]/
-    SIGN         = /^([,.?!、。？！‸…ー〜]|#{BRANCKETS})+$/
+
+    IGNORE_BRANCKETS      = /[\[\]{}‘’“”〈〉《》「」『』【】〔〕〘〙〚〛［］｛]/
+    BRANCKETS             = /([（）\(\)]|#{IGNORE_BRANCKETS})/
+    SIGN_WITHOUT_BRANKETS = /[!"\#$%&'*+,-.\/:;<=>?@\^`|~°　ー﹏！＊＋．／：；＜＞？～｡､･￣]/
+    SIGN                  = /(#{SIGN_WITHOUT_BRANKETS}|#{BRANCKETS})/
 
     attr_reader :table
 
@@ -17,7 +20,7 @@ module Yukinyamap
     end
 
     def rotate(text)
-      @table.rotate(text)
+      table.rotate(text)
 
       self
     end
@@ -27,7 +30,7 @@ module Yukinyamap
     end
 
     def generate_random
-      generate_from_first_node(@table.first_node)
+      generate_from_first_node(table.first_node)
     end
 
     def generate_popular
@@ -35,14 +38,14 @@ module Yukinyamap
     end
 
     def generate_from_word(word)
-      node = @table.find_node(word)
+      node = table.find_node(word)
       generate_from_last_node(node) + generate_from_first_node(node)
     end
 
     def generate_from_first_node(node)
       text = node.join
       loop do
-        node = @table.next_node(node)
+        node = table.next_node(node)
         break unless node
         break if clean(text + node[2]).size > 140
         text += node[2]
@@ -55,7 +58,7 @@ module Yukinyamap
     def generate_from_last_node(node)
       text = ''
       loop do
-        node = @table.prev_node(node)
+        node = table.prev_node(node)
         break unless node
         break if node[0] == MARKER_BEGIN
         break if clean(node[0] + text).size > 140
@@ -65,24 +68,26 @@ module Yukinyamap
       clean(text)
     end
 
-    def popular_word(nodes = nil)
+    def popular_word(words = nil)
       ranking = YM.config[:malkov][:popular][:ranking]
-      popular_words(nodes).first(ranking).map(&:first).sample
+      popular_words(words).first(ranking).map(&:first).sample
     end
 
-    def popular_words(nodes = nil)
+    def popular_words(words = nil)
+      tagger = Natto::MeCab.new
       recent = YM.config[:malkov][:popular][:recent]
-      nodes = nodes ? nodes : YM.malkov.table.nodes.last(recent).flatten
-      nodes.reduce(Hash.new(0)) { |r, n|
-        if n != MARKER_BEGIN &&
-            n != MARKER_END &&
-            !n.match(NUMBER) &&
-            !n.match(HIRAGANA) &&
-            !n.match(SIGN) &&
-            r[n] += 1
-        end
+      words = words ? words : YM.malkov.table.nodes.first(recent).flatten
+      words.select { |w|
+        w != MARKER_BEGIN &&
+        w != MARKER_END &&
+        !w.match(NUMBER) &&
+        !w.match(SIGN) &&
+        tagger.parse(w).match('名詞')
+      }.reduce(Hash.new(0)) { |r, n|
+        r[n] += 1
         r
-      }.select { |r, n| n > 1 } .sort_by { |r, n| -n }
+      }.select { |w, c| c > 1 }.
+        sort_by { |w, c| -c }
     end
 
     private
@@ -90,7 +95,7 @@ module Yukinyamap
       text.
         gsub(MARKER_BEGIN, '').
         gsub(MARKER_END, '').
-        gsub(BRANCKETS, '').
+        gsub(IGNORE_BRANCKETS, '').
         gsub(/ +/, ' ').
         strip
     end
