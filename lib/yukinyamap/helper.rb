@@ -29,6 +29,24 @@ module Yukinyamap
       @logger
     end
 
+    def stdout
+      return @standard_output_logger if @standard_output_logger
+
+      @standard_output_logger = Logger.new(STDOUT)
+      @standard_output_logger.formatter = Logger::Formatter.new
+
+      @standard_output_logger
+    end
+
+    def stderr
+      return @standard_error_logger if @standard_error_logger
+
+      @standard_error_logger = Logger.new(STDERR)
+      @standard_error_logger.formatter = Logger::Formatter.new
+
+      @standard_error_logger
+    end
+
     def tee(msg, level = :info)
       if [:error, :warn, :fatal].include?(level)
         error msg
@@ -38,16 +56,15 @@ module Yukinyamap
       logger.send level, msg
     end
 
-    def say(msg)
-      $stdout.puts msg
+    def say(msg, level = :info)
+      stdout.send level, msg
     end
 
-    def error(msg)
+    def error(msg, level = :error)
       if msg.is_a?(Exception)
-        $stderr.puts "#{msg.message} (#{msg.class})\n" << (msg.backtrace || []).join("\n")
-      else
-        $stderr.puts msg
+        msg = "#{msg.message} (#{msg.class})\n" << (msg.backtrace || []).join("\n")
       end
+      stderr.send level, msg
     end
 
     def twitter
