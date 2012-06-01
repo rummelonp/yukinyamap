@@ -77,6 +77,10 @@ module Yukinyamap
     def malkov
       @malkov ||= Malkov.new
     end
+
+    def hook_classes
+      YM.constants.grep(/Hook$/).map { |c| YM.const_get(c) }
+    end
   end
 
   extend Helper
