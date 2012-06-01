@@ -77,8 +77,14 @@ module Yukinyamap
     end
 
     def call(status)
+      popular_words = YM.malkov.popular_words.map(&:first)
+      word = popular_words.find { |w| status.keywords.include?(w) }
+      if word
+        tweet = "@#{status.user.screen_name} #{YM.malkov.generate_from_word(word)}"
+      else
+        tweet = "@#{status.user.screen_name} #{YM.malkov.generate_popular}"
+      end
       options = {:in_reply_to_status_id => status.id}
-      tweet = "@#{status.user.screen_name} #{YM.malkov.generate}"
       YM.twitter.update(tweet, options)
     end
   end
