@@ -20,7 +20,12 @@ module Yukinyamap
     end
 
     def call(status)
-      YM.say status
+      key = YM.col_key_from_status(status)
+      message = key
+      if key == 'status'
+        message += ": @#{status.user!.screen_name}"
+      end
+      YM.tee message, :debug
     end
   end
 
