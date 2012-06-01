@@ -191,13 +191,29 @@ module Yukinyamap
       HASHTAG_PATTERN = /#[\wＡ-Ｚａ-ｚ０-９ぁ-ヶ亜-黑]+/
       URL_PATTERN     = URI.regexp
 
+      PATTERNS = [
+        RT_PATTERN,
+        USER_PATTERN,
+        HASHTAG_PATTERN,
+        URL_PATTERN
+      ].freeze
+
+      CHARACTER_REFERENCES = [
+        {from: '&amp;', to: '&'},
+        {from: '&lt;',  to: '<'},
+        {from: '&gt;',  to: '>'},
+      ].freeze
+
       def self.clean(text)
-        text.gsub(RT_PATTERN, '').
-          gsub(USER_PATTERN, '').
-          gsub(HASHTAG_PATTERN, '').
-          gsub(URL_PATTERN, '').
-          gsub('&lt;', '<').
-          gsub('&gt;', '>')
+        PATTERNS.each do |p|
+          text = text.gsub(p, '')
+        end
+
+        CHARACTER_REFERENCES.each do |r|
+          text = text.gsub(r[:from], r[:to])
+        end
+
+        text
       end
     end
   end
