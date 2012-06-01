@@ -80,7 +80,7 @@ module Yukinyamap
 
     def popular_words(words = nil)
       tagger = Natto::MeCab.new
-      words = words ? words : YM.malkov.table.nodes.take(@recent).flatten
+      words = words ? words : table.nodes.take(@recent).flatten
       words.select { |w|
         w != MARKER_BEGIN &&
         w != MARKER_END &&
