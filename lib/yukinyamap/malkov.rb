@@ -184,16 +184,16 @@ module Yukinyamap
     end
 
     module Cleaner
+      URL_PATTERN     = URI.regexp
+
       USER_PATTERN    = /@[\w_]+/
       RT_PATTERN      = /(RT|QT):? #{USER_PATTERN}.*(\n|$)/
       HASHTAG_PATTERN = /#[\wＡ-Ｚａ-ｚ０-９ぁ-ヶ亜-黑]+/
-      URL_PATTERN     = URI.regexp
 
       PATTERNS = [
         RT_PATTERN,
         USER_PATTERN,
         HASHTAG_PATTERN,
-        URL_PATTERN
       ].freeze
 
       CHARACTER_REFERENCES = [
@@ -203,6 +203,8 @@ module Yukinyamap
       ].freeze
 
       def self.clean(text)
+        return '' if text.match(URL_PATTERN)
+
         PATTERNS.each do |r|
           text = text.gsub(r, '')
         end
