@@ -151,7 +151,6 @@ module Yukinyamap
 
     def call(status)
       YM.twitter.follow(status.source.screen_name)
-      YM.twitter.update("@#{status.source.screen_name} #{YM.malkov.generate_popular}")
     end
   end
 end
