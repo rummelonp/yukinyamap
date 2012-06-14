@@ -105,7 +105,7 @@ module Yukinyamap
     end
 
     def rip?(status)
-      return if Malkov::Cleaner::PATTERNS.any? { |r| status.text.match(r) }
+      return false if Malkov::Cleaner::PATTERNS.any? { |r| r.match(status.text) }
       @tweets.select { |_, t| t == status.text }.size >= @rip_count
     end
 
