@@ -37,7 +37,7 @@ module Yukinyamap
     def match(status)
       status.user!.screen_name != YM.screen_name &&
         status.text &&
-        !status.protected?
+        !status.user.protected?
     end
 
     def call(status)
